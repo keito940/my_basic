@@ -3,7 +3,7 @@
 **
 ** For the latest info, see https://github.com/paladin-t/my_basic/
 **
-** Copyright (C) 2011 - 2017 Wang Renxin
+** Copyright (C) 2011 - 2019 Wang Renxin
 **
 ** Permission is hereby granted, free of charge, to any person obtaining a copy of
 ** this software and associated documentation files (the "Software"), to deal in
@@ -97,13 +97,13 @@ extern "C" {
 
 #define _REALLOC_INC_STEP 16
 
-#define _NO_END(s) ((s) == MB_FUNC_OK || (s) == MB_FUNC_SUSPEND || (s) == MB_FUNC_WARNING || (s) == MB_FUNC_ERR || (s) == MB_FUNC_END)
+#define _NOT_FINISHED(s) ((s) == MB_FUNC_OK || (s) == MB_FUNC_SUSPEND || (s) == MB_FUNC_WARNING || (s) == MB_FUNC_ERR || (s) == MB_FUNC_END)
 
 static struct mb_interpreter_t* bas = 0;
 
-static jmp_buf _mem_failure_point;
+static jmp_buf mem_failure_point;
 
-#define _CHECK_MEM(__p) do { if(!(__p)) { longjmp(_mem_failure_point, 1); } } while(0)
+#define _CHECK_MEM(__p) do { if(!(__p)) { longjmp(mem_failure_point, 1); } } while(0)
 
 /* ========================================================} */
 
@@ -185,8 +185,8 @@ static long alloc_bytes = 0;
 static long in_pool_count = 0;
 static long in_pool_bytes = 0;
 
-static long _POOL_THRESHOLD_COUNT = 0;
-static long _POOL_THRESHOLD_BYTES = 1024 * 1024 * 32;
+static long POOL_THRESHOLD_COUNT = 0;
+static long POOL_THRESHOLD_BYTES = 1024 * 1024 * 32;
 
 #define _POOL_NODE_ALLOC(size) (((char*)malloc(sizeof(_pool_tag_t) + size)) + sizeof(_pool_tag_t))
 #define _POOL_NODE_PTR(s) (s - sizeof(_pool_tag_t))
@@ -211,10 +211,10 @@ static void _tidy_mem_pool(bool_t force) {
 	char* s = 0;
 
 	if(!force) {
-		if(_POOL_THRESHOLD_COUNT > 0 && in_pool_count < _POOL_THRESHOLD_COUNT)
+		if(POOL_THRESHOLD_COUNT > 0 && in_pool_count < POOL_THRESHOLD_COUNT)
 			return;
 
-		if(_POOL_THRESHOLD_BYTES > 0 && in_pool_bytes < _POOL_THRESHOLD_BYTES)
+		if(POOL_THRESHOLD_BYTES > 0 && in_pool_bytes < POOL_THRESHOLD_BYTES)
 			return;
 	}
 
@@ -853,7 +853,7 @@ static void _edit_program(const char* no) {
 	--lno;
 	memset(line, 0, _MAX_LINE_LENGTH);
 	_printf("%ld]", lno + 1);
-	mb_gets(line, _MAX_LINE_LENGTH);
+	mb_gets(0, line, _MAX_LINE_LENGTH);
 	l = (int)strlen(line);
 	_code()->lines[lno] = (char*)realloc(_code()->lines[lno], l + 2);
 	strcpy(_code()->lines[lno], line);
@@ -878,7 +878,7 @@ static void _insert_program(const char* no) {
 	--lno;
 	memset(line, 0, _MAX_LINE_LENGTH);
 	_printf("%ld]", lno + 1);
-	mb_gets(line, _MAX_LINE_LENGTH);
+	mb_gets(0, line, _MAX_LINE_LENGTH);
 	if(_code()->count + 1 == _code()->size) {
 		_code()->size += _REALLOC_INC_STEP;
 		_code()->lines = (char**)realloc(_code()->lines, sizeof(char*) * _code()->size);
@@ -979,7 +979,7 @@ static void _list_directory(const char* path) {
 
 static void _show_tip(void) {
 	_printf("MY-BASIC Interpreter Shell - %s\n", mb_ver_string());
-	_printf("Copyright (C) 2011 - 2017 Wang Renxin. All Rights Reserved.\n");
+	_printf("Copyright (C) 2011 - 2019 Wang Renxin. All Rights Reserved.\n");
 	_printf("For more information, see https://github.com/paladin-t/my_basic/.\n");
 	_printf("Input HELP and hint enter to view help information.\n");
 }
@@ -993,9 +993,9 @@ static void _show_help(void) {
 	_printf("Options:\n");
 	_printf("  -h         - Show help information\n");
 #if _USE_MEM_POOL
-	_printf("  -p n       - Set memory pool threashold size, n is size in bytes\n");
+	_printf("  -p n       - Set memory pool threashold, n is size in bytes\n");
 #endif /* _USE_MEM_POOL */
-	_printf("  -f \"dirs\"  - Set importing directories, separated with \";\" for more than one\n");
+	_printf("  -f \"dirs\"  - Set importing directories, separated by \";\" with more than one\n");
 	_printf("\n");
 	_printf("Interactive commands:\n");
 	_printf("  HELP  - View help information\n");
@@ -1007,8 +1007,8 @@ static void _show_help(void) {
 	_printf("          Usage: LIST [l [n]], l is start line number, n is line count\n");
 	_printf("  EDIT  - Edit (modify/insert/remove) a line in current program\n");
 	_printf("          Usage: EDIT n, n is line number\n");
-	_printf("                 EDIT -i n, insert a line before a given line, n is line number\n");
-	_printf("                 EDIT -r n, remove a line, n is line number\n");
+	_printf("                 EDIT -i n, insert a line before a given line\n");
+	_printf("                 EDIT -r n, remove a line\n");
 	_printf("  LOAD  - Load a file as current program\n");
 	_printf("          Usage: LOAD *.*\n");
 	_printf("  SAVE  - Save current program to a file\n");
@@ -1028,7 +1028,7 @@ static int _do_line(void) {
 
 	memset(line, 0, _MAX_LINE_LENGTH);
 	_printf("]");
-	mb_gets(line, _MAX_LINE_LENGTH);
+	mb_gets(0, line, _MAX_LINE_LENGTH);
 
 	memcpy(dup, line, _MAX_LINE_LENGTH);
 	strtok(line, " ");
@@ -1052,7 +1052,7 @@ static int _do_line(void) {
 			result = mb_load_string(bas, _code()->lines[i], false);
 		}
 		if(result == MB_FUNC_OK)
-			result = mb_run(bas);
+			result = mb_run(bas, true);
 		_printf("\n");
 	} else if(_str_eq(line, "BYE")) {
 		result = MB_FUNC_BYE;
@@ -1109,7 +1109,7 @@ static int _do_line(void) {
 
 static void _run_file(char* path) {
 	if(mb_load_file(bas, path) == MB_FUNC_OK) {
-		mb_run(bas);
+		mb_run(bas, true);
 	} else {
 		_printf("Invalid file or wrong program.\n");
 	}
@@ -1147,7 +1147,7 @@ static void _evaluate_expression(char* p) {
 		p = e;
 	}
 	if(mb_load_string(bas, p, true) == MB_FUNC_OK) {
-		mb_run(bas);
+		mb_run(bas, true);
 	} else {
 		_printf("Invalid expression.\n");
 	}
@@ -1193,7 +1193,7 @@ static bool_t _process_parameters(int argc, char* argv[]) {
 
 #if _USE_MEM_POOL
 	if(memp)
-		_POOL_THRESHOLD_BYTES = atoi(memp);
+		POOL_THRESHOLD_BYTES = atoi(memp);
 #else /* _USE_MEM_POOL */
 	mb_unrefvar(memp);
 #endif /* _USE_MEM_POOL */
@@ -1224,12 +1224,12 @@ static bool_t _process_parameters(int argc, char* argv[]) {
 #	define _OS "IOS"
 #elif defined MB_OS_MAC
 #	define _OS "MACOS"
-#elif defined MB_OS_UNIX
-#	define _OS "UNIX"
-#elif defined MB_OS_LINUX
-#	define _OS "LINUX"
 #elif defined MB_OS_ANDROID
 #	define _OS "ANDROID"
+#elif defined MB_OS_LINUX
+#	define _OS "LINUX"
+#elif defined MB_OS_UNIX
+#	define _OS "UNIX"
 #else
 #	define _OS "UNKNOWN"
 #endif /* MB_OS_WIN */
@@ -1311,7 +1311,7 @@ static int now(struct mb_interpreter_t* s, void** l) {
 	time(&ct);
 	timeinfo = localtime(&ct);
 	if(arg) {
-		strftime(buf, countof(buf), arg, timeinfo);
+		strftime(buf, sizeof(buf), arg, timeinfo);
 		mb_check(mb_push_string(s, l, mb_memdup(buf, (unsigned)(strlen(buf) + 1))));
 	} else {
 		arg = asctime(timeinfo);
@@ -1360,7 +1360,7 @@ static int trace(struct mb_interpreter_t* s, void** l) {
 
 	mb_assert(s && l);
 
-	memset(frames, 0, countof(frames));
+	memset(frames, 0, sizeof(frames));
 
 	mb_check(mb_attempt_open_bracket(s, l));
 
@@ -1439,7 +1439,7 @@ static int beep(struct mb_interpreter_t* s, void** l) {
 ** Callbacks and handlers
 */
 
-static int _on_stepped(struct mb_interpreter_t* s, void** l, char* f, int p, unsigned short row, unsigned short col) {
+static int _on_stepped(struct mb_interpreter_t* s, void** l, const char* f, int p, unsigned short row, unsigned short col) {
 	mb_unrefvar(s);
 	mb_unrefvar(l);
 	mb_unrefvar(f);
@@ -1450,7 +1450,7 @@ static int _on_stepped(struct mb_interpreter_t* s, void** l, char* f, int p, uns
 	return MB_FUNC_OK;
 }
 
-static void _on_error(struct mb_interpreter_t* s, mb_error_e e, char* m, char* f, int p, unsigned short row, unsigned short col, int abort_code) {
+static void _on_error(struct mb_interpreter_t* s, mb_error_e e, const char* m, const char* f, int p, unsigned short row, unsigned short col, int abort_code) {
 	mb_unrefvar(s);
 	mb_unrefvar(p);
 
@@ -1569,7 +1569,7 @@ int main(int argc, char* argv[]) {
 
 	atexit(_on_exit);
 
-	if(setjmp(_mem_failure_point)) {
+	if(setjmp(mem_failure_point)) {
 		_printf("Error: out of memory.\n");
 
 		exit(1);
@@ -1585,7 +1585,7 @@ int main(int argc, char* argv[]) {
 		_show_tip();
 		do {
 			status = _do_line();
-		} while(_NO_END(status));
+		} while(_NOT_FINISHED(status));
 	}
 
 	return 0;

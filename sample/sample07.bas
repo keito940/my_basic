@@ -1,6 +1,5 @@
-' This script is an example of MY-BASIC
-' Copyright (c) 2011 - 2017 Wang Renxin. All rights reserved.
-' For more information, see https://github.com/paladin-t/my_basic/
+REM This program is an example of MY-BASIC
+REM For more information, see https://github.com/paladin-t/my_basic/
 
 def reserve(m, n)
 	for j = len(m) to n + 2
@@ -92,7 +91,7 @@ enddef
 
 ' This is a brainfuck interpreter written with MY-BASIC
 input "Input: ", cmd$
-' Use a sample code?
+' Input "hello" to use hello-world
 if cmd$ = "hello" then
 	cmd$ = "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>."
 endif

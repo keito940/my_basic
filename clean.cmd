@@ -24,6 +24,5 @@ del /f /s /q output\*.iobj
 del /f /s /q output\*.ipdb
 del /f /s /q output\*.manifest
 del /f /s /q output\*.res
-del /f /s /q output\my_basic_d.exe
 
 echo Cleaning done!

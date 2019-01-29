@@ -1,7 +1,6 @@
-' Yet Another RPG Dungeon is a text based game.
-' It's aimed to be a comprehensive example and or a tutorial of MY-BASIC.
-' Copyright (C) 2011 - 2017 Wang Renxin. All rights reserved.
-' For more information about MY-BASIC, see https://github.com/paladin-t/my_basic/
+REM Yet Another RPG Dungeon is a text based game.
+REM It's aimed to be a comprehensive example and a tutorial of MY-BASIC.
+REM For more information, see https://github.com/paladin-t/my_basic/
 
 import "utils.bas"
 
@@ -18,8 +17,8 @@ class map_node
 	var valid_dirs = dirs.none_dir
 	var entities = list()
 
-	def tostring()
-		s = pos.tostring()
+	def to_string()
+		s = pos.to_string()
 		return "Map Node " + s
 	enddef
 
@@ -32,7 +31,7 @@ class map_node
 	enddef
 
 	def add_entity(ent)
-		if exist(entities, ent) then
+		if exists(entities, ent) then
 			log.w("Already added " + ent.name)
 
 			return false
@@ -63,7 +62,7 @@ class map
 
 	var nodes = dict()
 
-	def tostring()
+	def to_string()
 		return "Map"
 	enddef
 

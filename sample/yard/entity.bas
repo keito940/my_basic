@@ -1,9 +1,8 @@
-' Yet Another RPG Dungeon is a text based game.
-' It's aimed to be a comprehensive example and or a tutorial of MY-BASIC.
-' Copyright (C) 2011 - 2017 Wang Renxin. All rights reserved.
-' For more information about MY-BASIC, see https://github.com/paladin-t/my_basic/
+REM Yet Another RPG Dungeon is a text based game.
+REM It's aimed to be a comprehensive example and a tutorial of MY-BASIC.
+REM For more information, see https://github.com/paladin-t/my_basic/
 
-Class entity
+class entity
 	var name = ""
 
 	var alive = true
@@ -14,7 +13,7 @@ Class entity
 
 	var dead_handler = nil
 
-	def tostring()
+	def to_string()
 		return "Entity [" + name + "]"
 	enddef
 
